@@ -5,8 +5,9 @@ import (
 	"log"
 )
 
-sqlDriver := "sqlite3";
-dbCon := "../data/wol.db";
+var sqlDriver = "sqlite3"
+
+var dbCon = "./data/wol.db"
 
 func InitDB() {
 	err := ExecStatement("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)")
@@ -60,11 +61,7 @@ func QueryOne(query string, args ...interface{}) (*sql.Row, error) {
 		defer driver.Close()
 		return nil, err
 	}
-	row, err := driver.QueryRow(query, args...)
-	if err != nil {
-		defer driver.Close()
-		return nil, err
-	}
+	row := driver.QueryRow(query, args...)
 	defer driver.Close()
 	return row, nil
 }

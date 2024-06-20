@@ -5,6 +5,10 @@ import (
 	"log"
 )
 
+var sqlDriver = "sqlite3"
+
+var dbCon = "./data/wol.db"
+
 func InitDB() {
 	err := ExecStatement("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)")
 	if err != nil {
@@ -18,7 +22,7 @@ func InitDB() {
 }
 
 func ExecStatement(query string, args ...interface{}) error {
-	driver, err := sql.Open("sqlite3", "./wol.db")
+	driver, err := sql.Open(sqlDriver, dbCon)
 	if err != nil {
 		return err
 	}
@@ -37,7 +41,7 @@ func ExecStatement(query string, args ...interface{}) error {
 }
 
 func Query(query string, args ...interface{}) (*sql.Rows, error) {
-	driver, err := sql.Open("sqlite3", "./wol.db")
+	driver, err := sql.Open(sqlDriver, dbCon)
 	if err != nil {
 		defer driver.Close()
 		return nil, err
@@ -47,6 +51,17 @@ func Query(query string, args ...interface{}) (*sql.Rows, error) {
 		defer driver.Close()
 		return nil, err
 	}
-	defer rows.Close()
+	defer driver.Close()
 	return rows, nil
+}
+
+func QueryOne(query string, args ...interface{}) (*sql.Row, error) {
+	driver, err := sql.Open(sqlDriver, dbCon)
+	if err != nil {
+		defer driver.Close()
+		return nil, err
+	}
+	row := driver.QueryRow(query, args...)
+	defer driver.Close()
+	return row, nil
 }

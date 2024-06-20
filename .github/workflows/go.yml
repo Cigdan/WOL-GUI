@@ -1,31 +1,37 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Go
+name: Build Backend
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-
-  build:
+  build-backend:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
 
-    - name: Set up Go
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Go environment
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22.1'
+        go-version: 1.22.1  # Specify the Go version you are using
 
-    - name: Golang CGO cross compiler
-      uses: crazy-max/ghaction-xgo@v3.0.0
-            
-    - name: Build
-      run: go build -v ./backend
+    - name: Install dependencies
+      run: |
+        cd backend
+        go mod download
 
-    - name: Test
-      run: go test -v ./backend
+    - name: Build backend
+      run: |
+        cd backend
+        go build -v ./...
+
+    - name: Verify build
+      run: |
+        cd backend
+        go test -v ./...

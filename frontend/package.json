@@ -10,18 +10,29 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mantine/core": "^7.10.2",
+    "@mantine/hooks": "^7.10.2",
+    "@tanstack/react-query": "^5.45.1",
+    "@tanstack/react-router": "^1.39.4",
+    "axios": "^1.7.2",
+    "postcss-preset-mantine": "^1.15.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.52.0",
+    "react-query": "^3.39.3"
   },
   "devDependencies": {
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
+    "@tanstack/router-devtools": "^1.39.4",
+    "@tanstack/router-plugin": "^1.39.5",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
+    "postcss-import": "^16.1.0",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
   }

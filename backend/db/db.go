@@ -6,7 +6,7 @@ import (
 )
 
 sqlDriver := "sqlite3";
-dbCon := "./wol.db";
+dbCon := "../data/wol.db";
 
 func InitDB() {
 	err := ExecStatement("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)")

@@ -3,6 +3,7 @@ package auth
 import (
 	"backend/db"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"github.com/golang-jwt/jwt/v4"
@@ -111,10 +112,10 @@ func Login(username string, password string) (string, error, int) {
 	}
 	err = row.Scan(&dbId, &dbUsername, &dbPassword)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errors.New("user not found"), 401
+		}
 		return "", err, 500
-	}
-	if dbUsername != username {
-		return "", errors.New("username doesn't exist"), 400
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(dbPassword), []byte(password))

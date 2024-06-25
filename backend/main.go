@@ -37,7 +37,7 @@ func main() {
 		c.JSON(200, gin.H{"status": "success"})
 	})
 
-	r.POST("/login", func(c *gin.Context) {
+	r.POST("/auth/login", func(c *gin.Context) {
 		var user User
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(400, gin.H{"message": "Invalid JSON format"})
@@ -46,13 +46,14 @@ func main() {
 		token, err, status := auth.Login(user.Username, user.Password)
 		if err != nil {
 			c.JSON(status, gin.H{"message": err.Error()})
+			return
 		}
 		c.SetCookie("token", token, 24*60*60*1000, "/", "localhost", false, true)
 		c.JSON(status, gin.H{"message": "Successfully logged in"})
 
 	})
 
-	r.POST("/register", func(c *gin.Context) {
+	r.POST("/auth/register", func(c *gin.Context) {
 		var user User
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(400, gin.H{"message": "Invalid JSON format"})

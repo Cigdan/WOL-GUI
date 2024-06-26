@@ -1,7 +1,11 @@
 import {Button, Group, Paper, Stack, Text} from '@mantine/core';
+import {
+  useMutation,
+} from '@tanstack/react-query'
 import classes from './sidebar.module.css';
-import {Link, useRouterState} from "@tanstack/react-router";
-import { House, Settings  } from 'lucide-react';
+import {Link, useNavigate, useRouterState} from "@tanstack/react-router";
+import { House, Settings,LogOut   } from 'lucide-react';
+import {logout} from '../misc/api.ts'
 
 const links = [
   {
@@ -18,9 +22,17 @@ const links = [
 
 function Sidebar() {
   const state = useRouterState()
+  const navigate = useNavigate()
+  const logoutMutation = useMutation({
+    mutationFn: () => logout(),
+    onSuccess: () => {
+      navigate({to: "/login"})
+    }
+  })
   return (
         <Paper className={classes.navbar} withBorder radius={false}>
-          <Stack className={classes.navItems} gap="sm">
+          <Stack className={classes.navItems} justify={"space-between"} >
+          <Stack gap="sm">
           {links.map((link) => {
             return (
                 <Link to={link.href}>
@@ -29,11 +41,17 @@ function Sidebar() {
                       {link.icon}
                       <Text>{link.name}</Text>
                     </Group>
-
                   </Button>
                 </Link>
             )
           })}
+          </Stack>
+            <Button size="md" variant={"subtle"} onClick={() => logoutMutation.mutate()}>
+              <Group>
+                <LogOut width={24}/>
+                <Text>Logout</Text>
+              </Group>
+            </Button>
           </Stack>
         </Paper>
   );

@@ -6,9 +6,17 @@ const api = axios.create({
   withCredentials: true,
 })
 
+/* api.interceptors.response.use(async (response) => {
+  if (response.status === 401) {
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+      await logout()
+    }
+  }
+}) */
+
 
 async function login(user: User) {
-    const response =  await api.post('/auth/login', {
+    const response = await api.post('/auth/login', {
       username: user.username,
       password: user.password
     })
@@ -23,4 +31,14 @@ async function createUser(user: User) {
   return response.data
 }
 
-export { login, createUser }
+async function logout() {
+  await api.post('/auth/logout')
+  localStorage.setItem('isLoggedIn', 'false')
+}
+
+async function getMyDevices() {
+  const response = await api.get('/devices')
+  return response.data
+}
+
+export { login, createUser, logout, getMyDevices }

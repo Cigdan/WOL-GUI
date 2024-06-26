@@ -10,8 +10,10 @@ export const Route = createRootRoute({
             <Sidebar/>
             <Outlet/>
           </Group>
-
       )
     }
+    return (
+        <Outlet/>
+    )
   }
 })

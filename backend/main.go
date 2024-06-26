@@ -31,7 +31,26 @@ func DbMiddleWare() gin.HandlerFunc {
 			return
 		}
 		defer driver.Close()
-		c.Set("dbConn", driver)
+		c.Set("driver", driver)
+		c.Next()
+	}
+}
+
+func AuthMiddleWare() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token, err := c.Cookie("token")
+		if err != nil {
+			c.JSON(401, gin.H{"message": "Unauthorized"})
+			c.Abort()
+			return
+		}
+		claims, err, status := auth.ValidateToken(token)
+		if err != nil {
+			c.JSON(status, gin.H{"message": err.Error()})
+			c.Abort()
+			return
+		}
+		c.Set("claims", claims)
 		c.Next()
 	}
 }
@@ -47,66 +66,95 @@ func main() {
 		AllowAllOrigins:  true,
 	}))
 
-	r.Use(DbMiddleWare())
-
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "success"})
 	})
 
-	r.POST("/auth/login", func(c *gin.Context) {
-		var user User
-		if err := c.BindJSON(&user); err != nil {
-			c.JSON(400, gin.H{"message": "Invalid JSON format"})
-			return
-		}
+	// ** Auth Routes start **
+	authRoutes := r.Group("/auth")
+	{
+		authRoutes.Use(DbMiddleWare())
 
-		dbConn, exists := c.Get("dbConn")
-		if !exists {
-			c.JSON(500, gin.H{"message": "Database connection not found"})
-			return
-		}
+		// Login Route
+		authRoutes.POST("/login", func(c *gin.Context) {
+			var user User
+			if err := c.BindJSON(&user); err != nil {
+				c.JSON(400, gin.H{"message": "Invalid JSON format"})
+				return
+			}
 
-		driver, ok := dbConn.(*sql.DB)
-		if !ok {
-			c.JSON(500, gin.H{"message": "Invalid database driver"})
-			return
-		}
+			driver, ok := c.MustGet("driver").(*sql.DB)
+			if !ok {
+				c.JSON(500, gin.H{"message": "Invalid database driver"})
+				return
+			}
 
-		token, err, status := auth.Login(driver, user.Username, user.Password)
-		if err != nil {
-			c.JSON(status, gin.H{"message": err.Error()})
-			return
-		}
-		c.SetCookie("token", token, 24*60*60*1000, "/", "localhost", false, true)
-		c.JSON(status, gin.H{"message": "Successfully logged in"})
-	})
+			token, err, status := auth.Login(driver, user.Username, user.Password)
+			if err != nil {
+				c.JSON(status, gin.H{"message": err.Error()})
+				return
+			}
+			c.SetCookie("token", token, 24*60*60*1000, "/", "localhost", false, true)
+			c.JSON(status, gin.H{"message": "Successfully logged in"})
+		})
 
-	r.POST("/auth/register", func(c *gin.Context) {
-		var user User
-		if err := c.BindJSON(&user); err != nil {
-			c.JSON(400, gin.H{"message": "Invalid JSON format"})
-			return
-		}
+		// Register Route
+		authRoutes.POST("/register", func(c *gin.Context) {
+			var user User
+			if err := c.BindJSON(&user); err != nil {
+				c.JSON(400, gin.H{"message": "Invalid JSON format"})
+				return
+			}
 
-		dbConn, exists := c.Get("dbConn")
-		if !exists {
-			c.JSON(500, gin.H{"message": "Database connection not found"})
-			return
-		}
+			driver, ok := c.MustGet("driver").(*sql.DB)
+			if !ok {
+				c.JSON(500, gin.H{"message": "Invalid database driver"})
+				return
+			}
 
-		driver, ok := dbConn.(*sql.DB)
-		if !ok {
-			c.JSON(500, gin.H{"message": "Invalid database driver"})
-			return
-		}
+			err, code := auth.CreateUser(driver, user.Username, user.Password)
+			if err != nil {
+				c.JSON(code, gin.H{"message": err.Error()})
+				return
+			}
+			c.JSON(200, gin.H{"message": "Successfully created new account"})
+		})
 
-		err, code := auth.CreateUser(driver, user.Username, user.Password)
-		if err != nil {
-			c.JSON(code, gin.H{"message": err.Error()})
-			return
-		}
-		c.JSON(200, gin.H{"message": "Successfully created new account"})
-	})
+		// Logout Route
+		authRoutes.POST("/logout", func(c *gin.Context) {
+			c.SetCookie("token", "", -1, "/", "localhost", false, true)
+			c.JSON(200, gin.H{"message": "Successfully logged out"})
+		})
+	}
+	// ** Auth Routes end **
+
+	// ** Device Routes start **
+	deviceRoutes := r.Group("/devices")
+	{
+		deviceRoutes.Use(DbMiddleWare())
+		deviceRoutes.Use(AuthMiddleWare())
+
+		// Get Devices Route
+		deviceRoutes.GET("/", func(c *gin.Context) {
+			driver, ok := c.MustGet("driver").(*sql.DB)
+			if !ok {
+				c.JSON(500, gin.H{"message": "Invalid database driver"})
+				return
+			}
+			claims, ok := c.MustGet("claims").(*Claims)
+			if !ok {
+				c.JSON(500, gin.H{"message": "Invalid claims"})
+				return
+			}
+			devices, err := db.Query(driver, "SELECT * FROM device WHERE user_id = ?", claims.Id)
+			if err != nil {
+				c.JSON(500, gin.H{"message": "Couldn't get devices", "data": nil})
+				return
+			}
+			c.JSON(200, gin.H{"message": "Successfully fetched devices", "data": devices})
+		})
+	}
+	// ** Device Routes end **
 
 	err := r.Run()
 	if err != nil {

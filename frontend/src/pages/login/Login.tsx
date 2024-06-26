@@ -13,7 +13,7 @@ function Login() {
     mutationFn: (user) => login(user),
     onSuccess: () => {
       localStorage.setItem("isLoggedIn", "true")
-      navigate({to: "/"})
+      navigate({to: "/dashboard"})
     }
   })
 
@@ -58,7 +58,7 @@ function Login() {
                     loginMutation.isPending ? <Loader color="white" type="dots" /> : 'Login'
                   }</Button>
                 </Group>
-                {loginMutation.isError && <Text c="red" ta="right">{loginMutation.error.response?.data.message || loginMutation.error.message}</Text>}
+                {loginMutation.isError && <Text c="red" ta="right">{loginMutation.error.response ? loginMutation.error.response?.message : loginMutation.error.message}</Text>}
               </Stack>
             </form>
           </Paper>

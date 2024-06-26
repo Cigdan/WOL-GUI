@@ -3,6 +3,7 @@ package main
 import (
 	"backend/db"
 	"backend/db/auth"
+	"database/sql"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -21,8 +22,21 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+func DbMiddleWare() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		driver, err := db.InitDB()
+		if err != nil {
+			c.JSON(500, gin.H{"message": "couldn't connect to database"})
+			c.Abort()
+			return
+		}
+		defer driver.Close()
+		c.Set("dbConn", driver)
+		c.Next()
+	}
+}
+
 func main() {
-	db.InitDB()
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -32,6 +46,8 @@ func main() {
 		AllowCredentials: true,
 		AllowAllOrigins:  true,
 	}))
+
+	r.Use(DbMiddleWare())
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "success"})
@@ -43,14 +59,26 @@ func main() {
 			c.JSON(400, gin.H{"message": "Invalid JSON format"})
 			return
 		}
-		token, err, status := auth.Login(user.Username, user.Password)
+
+		dbConn, exists := c.Get("dbConn")
+		if !exists {
+			c.JSON(500, gin.H{"message": "Database connection not found"})
+			return
+		}
+
+		driver, ok := dbConn.(*sql.DB)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid database driver"})
+			return
+		}
+
+		token, err, status := auth.Login(driver, user.Username, user.Password)
 		if err != nil {
 			c.JSON(status, gin.H{"message": err.Error()})
 			return
 		}
 		c.SetCookie("token", token, 24*60*60*1000, "/", "localhost", false, true)
 		c.JSON(status, gin.H{"message": "Successfully logged in"})
-
 	})
 
 	r.POST("/auth/register", func(c *gin.Context) {
@@ -59,7 +87,20 @@ func main() {
 			c.JSON(400, gin.H{"message": "Invalid JSON format"})
 			return
 		}
-		err, code := auth.CreateUser(user.Username, user.Password)
+
+		dbConn, exists := c.Get("dbConn")
+		if !exists {
+			c.JSON(500, gin.H{"message": "Database connection not found"})
+			return
+		}
+
+		driver, ok := dbConn.(*sql.DB)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid database driver"})
+			return
+		}
+
+		err, code := auth.CreateUser(driver, user.Username, user.Password)
 		if err != nil {
 			c.JSON(code, gin.H{"message": err.Error()})
 			return

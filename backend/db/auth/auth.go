@@ -24,9 +24,9 @@ func hashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-func CreateUser(username string, password string) (error, int) {
+func CreateUser(driver *sql.DB, username string, password string) (error, int) {
 	// Check if username already exists
-	row, err := db.QueryOne("SELECT COUNT(username) as users FROM user WHERE username = ?", username)
+	row, err := db.QueryOne(driver, "SELECT COUNT(username) as users FROM user WHERE username = ?", username)
 	if err != nil {
 		return err, 500
 	}
@@ -45,7 +45,7 @@ func CreateUser(username string, password string) (error, int) {
 		return err, 500
 	}
 
-	err = db.ExecStatement("INSERT INTO user (username, password) VALUES (?, ?)", username, hashedPassword)
+	err = db.ExecStatement(driver, "INSERT INTO user (username, password) VALUES (?, ?)", username, hashedPassword)
 	if err != nil {
 		return err, 500
 	}
@@ -101,12 +101,12 @@ func InitAuth() error {
 	}
 	return nil
 }
-func Login(username string, password string) (string, error, int) {
+func Login(driver *sql.DB, username string, password string) (string, error, int) {
 	var dbId int
 	var dbUsername string
 	var dbPassword string
 
-	row, err := db.QueryOne("SELECT id, username, password FROM user WHERE username = ?", username)
+	row, err := db.QueryOne(driver, "SELECT id, username, password FROM user WHERE username = ?", username)
 	if err != nil {
 		return "", err, 400
 	}

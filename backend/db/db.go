@@ -2,66 +2,50 @@ package db
 
 import (
 	"database/sql"
-	"log"
 )
 
 var sqlDriver = "sqlite3"
 
-var dbCon = "./data/wol.db"
+var dbCon = "./wol.db"
 
-func InitDB() {
-	err := ExecStatement("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)")
+func InitDB() (db *sql.DB, err error) {
+	driver, err := sql.Open(sqlDriver, dbCon)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	err = ExecStatement("CREATE TABLE IF NOT EXISTS device (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, mac_address TEXT NOT NULL UNIQUE, last_online DATETIME, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES user(id))")
+	err = ExecStatement(driver, "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
+	err = ExecStatement(driver, "CREATE TABLE IF NOT EXISTS device (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, mac_address TEXT NOT NULL UNIQUE, last_online DATETIME, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES user(id))")
+	if err != nil {
+		return nil, err
+	}
+	return driver, nil
 
 }
 
-func ExecStatement(query string, args ...interface{}) error {
-	driver, err := sql.Open(sqlDriver, dbCon)
-	if err != nil {
-		return err
-	}
+func ExecStatement(driver *sql.DB, query string, args ...interface{}) error {
 	statement, err := driver.Prepare(query)
 	if err != nil {
-		defer driver.Close()
 		return err
 	}
 	_, err = statement.Exec(args...)
 	if err != nil {
-		defer driver.Close()
 		return err
 	}
-	defer driver.Close()
 	return nil
 }
 
-func Query(query string, args ...interface{}) (*sql.Rows, error) {
-	driver, err := sql.Open(sqlDriver, dbCon)
-	if err != nil {
-		defer driver.Close()
-		return nil, err
-	}
+func Query(driver *sql.DB, query string, args ...interface{}) (*sql.Rows, error) {
 	rows, err := driver.Query(query, args...)
 	if err != nil {
-		defer driver.Close()
 		return nil, err
 	}
-	defer driver.Close()
 	return rows, nil
 }
 
-func QueryOne(query string, args ...interface{}) (*sql.Row, error) {
-	driver, err := sql.Open(sqlDriver, dbCon)
-	if err != nil {
-		defer driver.Close()
-		return nil, err
-	}
+func QueryOne(driver *sql.DB, query string, args ...interface{}) (*sql.Row, error) {
 	row := driver.QueryRow(query, args...)
-	defer driver.Close()
 	return row, nil
 }

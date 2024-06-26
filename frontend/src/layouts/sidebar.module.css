@@ -1,0 +1,15 @@
+.navbar {
+    height: 100dvh;
+    max-width: 250px;
+    border-left: none;
+    border-bottom: none;
+    border-top: none;
+}
+
+.navButton {
+    width: 100%;
+}
+
+.navItems {
+    padding: 1rem;
+}

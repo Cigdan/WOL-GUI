@@ -1,11 +1,17 @@
-import { createRootRoute, Link, Outlet } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/router-devtools'
+import {createRootRoute, Outlet} from '@tanstack/react-router'
+import Sidebar from "../layouts/Sidebar.tsx";
+import {Group} from "@mantine/core";
 
 export const Route = createRootRoute({
-  component: () => (
-      <>
-        <Outlet />
-        <TanStackRouterDevtools />
-      </>
-  ),
+  component: () => {
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+      return (
+          <Group grow>
+            <Sidebar/>
+            <Outlet/>
+          </Group>
+
+      )
+    }
+  }
 })

@@ -66,12 +66,19 @@ func main() {
 		AllowAllOrigins:  true,
 	}))
 
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "success"})
+	r.Static("/assets", "../frontend/dist/assets")
+	r.StaticFile("/vite.svg", "../frontend/dist/vite.svg")
+
+	// Serve the index.html file
+	r.StaticFile("/", "../frontend/dist/index.html")
+	r.StaticFile("/index.html", "../frontend/dist/index.html")
+
+	r.NoRoute(func(c *gin.Context) {
+		c.File("../frontend/dist/index.html")
 	})
 
 	// ** Auth Routes start **
-	authRoutes := r.Group("/auth")
+	authRoutes := r.Group("/api/auth")
 	{
 		authRoutes.Use(DbMiddleWare())
 
@@ -129,7 +136,7 @@ func main() {
 	// ** Auth Routes end **
 
 	// ** Device Routes start **
-	deviceRoutes := r.Group("/devices")
+	deviceRoutes := r.Group("/api/devices")
 	{
 		deviceRoutes.Use(DbMiddleWare())
 		deviceRoutes.Use(AuthMiddleWare())

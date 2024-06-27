@@ -1,16 +1,16 @@
-import {Paper, Stack, Container, TextInput, PasswordInput, Group, Button, Loader, Text} from '@mantine/core';
+import {Paper, Stack, Container, TextInput, PasswordInput, Group, Button, Loader} from '@mantine/core';
 import {
   useMutation,
 } from '@tanstack/react-query'
 import {Link, useNavigate} from "@tanstack/react-router";
 import {useForm, SubmitHandler} from "react-hook-form";
 import {login} from '../../misc/api.ts'
-import {User} from '../../misc/types.ts'
+import {User} from '../../misc/Types.ts'
 
 function Login() {
   const navigate = useNavigate()
   const loginMutation = useMutation({
-    mutationFn: (user) => login(user),
+    mutationFn: (user : User) => login(user),
     onSuccess: () => {
       localStorage.setItem("isLoggedIn", "true")
       navigate({to: "/dashboard"})
@@ -58,7 +58,6 @@ function Login() {
                     loginMutation.isPending ? <Loader color="white" type="dots" /> : 'Login'
                   }</Button>
                 </Group>
-                {loginMutation.isError && <Text c="red" ta="right">{loginMutation.error.response ? loginMutation.error.response?.message : loginMutation.error.message}</Text>}
               </Stack>
             </form>
           </Paper>

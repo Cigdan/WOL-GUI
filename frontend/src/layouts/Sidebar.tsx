@@ -30,7 +30,7 @@ function Sidebar() {
     }
   })
   return (
-        <Paper className={classes.navbar} withBorder radius={false}>
+        <Paper className={classes.navbar} withBorder radius={0}>
           <Stack className={classes.navItems} justify={"space-between"} >
           <Stack gap="sm">
           {links.map((link) => {

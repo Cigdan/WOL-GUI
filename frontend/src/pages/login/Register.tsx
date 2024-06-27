@@ -1,6 +1,6 @@
-import {Paper, Stack, Container, TextInput, PasswordInput, Group, Button, Text} from '@mantine/core';
+import {Paper, Stack, Container, TextInput, PasswordInput, Group, Button} from '@mantine/core';
 import {useForm, SubmitHandler} from "react-hook-form";
-import {User} from '../../misc/types.ts'
+import {User} from '../../misc/Types.ts'
 import {
   useMutation,
 } from '@tanstack/react-query'
@@ -16,7 +16,7 @@ function Register() {
   } = useForm<User>();
 
   const registerMutation = useMutation({
-    mutationFn: (user) => createUser(user),
+    mutationFn: (user : User) => createUser(user),
     onSuccess: () => {
       navigate({to: "/login"})
     }
@@ -58,7 +58,6 @@ function Register() {
                   <Link  to="/login">Already created a user?</Link>
                   <Button type="submit" disabled={registerMutation.isPending || registerMutation.isSuccess}>Create User</Button>
                 </Group>
-                {registerMutation.isError && <Text c="red" ta="right">{registerMutation.error.response?.data.message || registerMutation.error.message}</Text>}
               </Stack>
             </form>
           </Paper>

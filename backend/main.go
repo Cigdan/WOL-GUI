@@ -132,6 +132,16 @@ func main() {
 			c.SetCookie("token", "", -1, "/", "localhost", false, true)
 			c.JSON(200, gin.H{"message": "Successfully logged out"})
 		})
+
+		// Check if user is logged in
+		authRoutes.GET("/check", func(c *gin.Context) {
+			_, err := c.Cookie("token")
+			if err != nil {
+				c.JSON(401, gin.H{"message": "Unauthorized"})
+				return
+			}
+			c.JSON(200, gin.H{"message": "Authorized"})
+		})
 	}
 	// ** Auth Routes end **
 

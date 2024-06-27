@@ -12,7 +12,6 @@ function Login() {
   const loginMutation = useMutation({
     mutationFn: (user : User) => login(user),
     onSuccess: () => {
-      localStorage.setItem("isLoggedIn", "true")
       navigate({to: "/dashboard"})
     }
   })

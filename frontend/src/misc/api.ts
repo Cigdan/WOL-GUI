@@ -1,19 +1,25 @@
 import axios from 'axios';
 import {User} from "./Types.ts";
+import {useNavigate} from "@tanstack/react-router";
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'http://localhost:8080/api',
   withCredentials: true,
 })
-
-/* api.interceptors.response.use(async (response) => {
-  if (response.status === 401) {
-    if (localStorage.getItem('isLoggedIn') === 'true') {
-      await logout()
+// Response interceptor for handling 401 errors
+api.interceptors.response.use(
+    response => response,
+    error => {
+      if (error.response && error.response.status === 401) {
+        if (!window.location.pathname.includes('/login')  && !window.location.pathname.includes('/register')) {
+          console.log('Unauthorized! Redirecting to login...');
+          const navigate = useNavigate()
+          navigate({to: "/login"})
+        }
+      }
+      return Promise.reject(error);
     }
-  }
-}) */
-
+);
 
 async function login(user: User) {
     const response = await api.post('/auth/login', {
@@ -33,7 +39,11 @@ async function createUser(user: User) {
 
 async function logout() {
   await api.post('/auth/logout')
-  localStorage.setItem('isLoggedIn', 'false')
+}
+
+async function checkAuth() {
+  const response = await api.get('/auth/check')
+  return response.data
 }
 
 async function getMyDevices() {
@@ -41,4 +51,4 @@ async function getMyDevices() {
   return response.data
 }
 
-export { login, createUser, logout, getMyDevices }
+export { login, createUser, logout, getMyDevices, checkAuth }

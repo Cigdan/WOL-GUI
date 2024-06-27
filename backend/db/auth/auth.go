@@ -131,18 +131,28 @@ func Login(driver *sql.DB, username string, password string) (string, error, int
 }
 
 func ValidateToken(reqToken string) (*Claims, error, int) {
-	token, err := jwt.ParseWithClaims(reqToken, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return os.Getenv("JWT_KEY"), nil
+	jwtToken := reqToken
+	claims := &Claims{}
+	key, isKey := os.LookupEnv("JWT_KEY")
+	if !isKey {
+		err := InitAuth()
+		if err != nil {
+			return nil, err, 500
+		}
+		key, _ = os.LookupEnv("JWT_KEY")
+	}
+	decodedKey, err := base64.URLEncoding.DecodeString(key)
+	token, err := jwt.ParseWithClaims(jwtToken, claims, func(token *jwt.Token) (interface{}, error) {
+		return decodedKey, nil
 	})
 	if err != nil {
 		if errors.Is(err, jwt.ErrSignatureInvalid) {
-			return nil, errors.New("invalid token supplied"), 401
+			return nil, errors.New("invalid token"), 401
 		}
 		return nil, err, 500
 	}
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil, 200
+	if !token.Valid {
+		return nil, errors.New("invalid token"), 401
 	}
-	return nil, errors.New("invalid token supplied"), 401
-
+	return claims, nil, 200
 }

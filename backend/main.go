@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
@@ -16,10 +16,9 @@ type User struct {
 	Password string `json:"password"`
 }
 
-type Claims struct {
-	Id       int    `json:"id"`
+type UserData struct {
 	Username string `json:"username"`
-	jwt.RegisteredClaims
+	ID       int    `json:"id"`
 }
 
 func DbMiddleWare() gin.HandlerFunc {
@@ -50,28 +49,42 @@ func AuthMiddleWare() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set("claims", claims)
+		userData := UserData{Username: claims.Username, ID: claims.ID}
+		c.Set("userdata", userData)
 		c.Next()
 	}
 }
 
+func EnvMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
+		c.Next()
+	}
+
+}
+
 func main() {
 	r := gin.Default()
+	r.Use(EnvMiddleware())
 
-	r.Use(cors.New(cors.Config{
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		AllowAllOrigins:  true,
-	}))
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:5173"}
+	config.AllowCredentials = true
+	r.Use(cors.New(config))
 
 	r.Static("/assets", "../frontend/dist/assets")
 	r.StaticFile("/vite.svg", "../frontend/dist/vite.svg")
 
-	// Serve the index.html file
-	r.StaticFile("/", "../frontend/dist/index.html")
-	r.StaticFile("/index.html", "../frontend/dist/index.html")
+	// Serve the index.html file for root and other routes
+	r.GET("/", func(c *gin.Context) {
+		c.File("../frontend/dist/index.html")
+	})
+	r.GET("/index.html", func(c *gin.Context) {
+		c.File("../frontend/dist/index.html")
+	})
 
 	r.NoRoute(func(c *gin.Context) {
 		c.File("../frontend/dist/index.html")
@@ -101,7 +114,7 @@ func main() {
 				c.JSON(status, gin.H{"message": err.Error()})
 				return
 			}
-			c.SetCookie("token", token, 24*60*60*1000, "/", "localhost", false, true)
+			c.SetCookie("token", token, 24*60*60, "/", "localhost", false, true)
 			c.JSON(status, gin.H{"message": "Successfully logged in"})
 		})
 
@@ -135,10 +148,14 @@ func main() {
 
 		// Check if user is logged in
 		authRoutes.GET("/check", func(c *gin.Context) {
-			_, err := c.Cookie("token")
+			token, err := c.Cookie("token")
 			if err != nil {
 				c.JSON(401, gin.H{"message": "Unauthorized"})
 				return
+			}
+			_, err, _ = auth.ValidateToken(token)
+			if err != nil {
+				c.JSON(401, gin.H{"message": err.Error()})
 			}
 			c.JSON(200, gin.H{"message": "Authorized"})
 		})
@@ -152,18 +169,18 @@ func main() {
 		deviceRoutes.Use(AuthMiddleWare())
 
 		// Get Devices Route
-		deviceRoutes.GET("/", func(c *gin.Context) {
+		deviceRoutes.GET("", func(c *gin.Context) {
 			driver, ok := c.MustGet("driver").(*sql.DB)
 			if !ok {
 				c.JSON(500, gin.H{"message": "Invalid database driver"})
 				return
 			}
-			claims, ok := c.MustGet("claims").(*Claims)
+			user, ok := c.MustGet("userdata").(UserData)
 			if !ok {
-				c.JSON(500, gin.H{"message": "Invalid claims"})
+				c.JSON(500, gin.H{"message": "Invalid userdata"})
 				return
 			}
-			devices, err := db.Query(driver, "SELECT * FROM device WHERE user_id = ?", claims.Id)
+			devices, err := db.Query(driver, "SELECT * FROM device WHERE user_id = ?", user.ID)
 			if err != nil {
 				c.JSON(500, gin.H{"message": "Couldn't get devices", "data": nil})
 				return

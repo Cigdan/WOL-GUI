@@ -6,16 +6,18 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
-	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/crypto/bcrypt"
+	"fmt"
 	"log"
 	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Claims struct {
-	Id       int    `json:"id"`
 	Username string `json:"username"`
+	ID       int    `json:"id"`
 	jwt.RegisteredClaims
 }
 
@@ -55,7 +57,7 @@ func CreateUser(driver *sql.DB, username string, password string) (error, int) {
 func GenerateToken(id int, username string) (string, error) {
 	key, isKey := os.LookupEnv("JWT_KEY")
 	if !isKey {
-		err := InitAuth()
+		err := generateKey()
 		if err != nil {
 			return "", err
 		}
@@ -66,16 +68,14 @@ func GenerateToken(id int, username string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		Username: username,
-		Id:       id,
+		ID:       id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedString, err := token.SignedString(decodedKey)
 	if err != nil {
@@ -84,23 +84,20 @@ func GenerateToken(id int, username string) (string, error) {
 	return signedString, nil
 }
 
-func InitAuth() error {
-	_, keyExists := os.LookupEnv("JWT_KEY")
-	if !keyExists {
-		log.Println("JWT_KEY environment variable not set, new key will be generated")
-		secret := make([]byte, 32)
-		_, err := rand.Read(secret)
-		if err != nil {
-			log.Println("Error generating random secret", err)
-			return err
-		}
-		err = os.Setenv("JWT_KEY", base64.URLEncoding.EncodeToString(secret))
-		if err != nil {
-			return err
-		}
+func generateKey() error {
+	log.Println("JWT_KEY environment variable not set, new key will be generated")
+	secret := make([]byte, 32)
+	_, err := rand.Read(secret)
+	if err != nil {
+		return err
+	}
+	err = os.Setenv("JWT_KEY", base64.URLEncoding.EncodeToString(secret))
+	if err != nil {
+		return err
 	}
 	return nil
 }
+
 func Login(driver *sql.DB, username string, password string) (string, error, int) {
 	var dbId int
 	var dbUsername string
@@ -131,28 +128,42 @@ func Login(driver *sql.DB, username string, password string) (string, error, int
 }
 
 func ValidateToken(reqToken string) (*Claims, error, int) {
-	jwtToken := reqToken
-	claims := &Claims{}
 	key, isKey := os.LookupEnv("JWT_KEY")
 	if !isKey {
-		err := InitAuth()
+		err := generateKey()
 		if err != nil {
 			return nil, err, 500
 		}
-		key, _ = os.LookupEnv("JWT_KEY")
+		key = os.Getenv("JWT_KEY")
 	}
+
 	decodedKey, err := base64.URLEncoding.DecodeString(key)
-	token, err := jwt.ParseWithClaims(jwtToken, claims, func(token *jwt.Token) (interface{}, error) {
+	if err != nil {
+		return nil, err, 500
+	}
+
+	token, err := jwt.ParseWithClaims(reqToken, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		// Validate the signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return decodedKey, nil
 	})
+
 	if err != nil {
 		if errors.Is(err, jwt.ErrSignatureInvalid) {
-			return nil, errors.New("invalid token"), 401
+			return nil, errors.New("invalid token signature"), 401
 		}
 		return nil, err, 500
 	}
-	if !token.Valid {
-		return nil, errors.New("invalid token"), 401
+
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		// Check if the token is expired
+		if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
+			return nil, errors.New("token is expired"), 401
+		}
+		return claims, nil, 200
 	}
-	return claims, nil, 200
+
+	return nil, errors.New("invalid token supplied"), 401
 }

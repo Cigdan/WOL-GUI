@@ -6,6 +6,7 @@ import classes from './sidebar.module.css';
 import {Link, useNavigate, useRouterState} from "@tanstack/react-router";
 import { House, Settings,LogOut   } from 'lucide-react';
 import {logout} from '../misc/api.ts'
+import Toast from 'react-hot-toast';
 
 const links = [
   {
@@ -26,7 +27,16 @@ function Sidebar() {
   const logoutMutation = useMutation({
     mutationFn: () => logout(),
     onSuccess: () => {
+      Toast.success('Logout successful')
       navigate({to: "/login"})
+    },
+    onError: (error) => {
+      if (error.response) {
+        Toast.error(error.response?.data.message)
+      }
+      else {
+        Toast.error(error.message)
+      }
     }
   })
   return (

@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query'
 import {createUser} from "../../misc/api.ts";
 import {Link, useNavigate} from "@tanstack/react-router";
+import Toast from "react-hot-toast";
 
 function Register() {
   const navigate = useNavigate()
@@ -18,7 +19,16 @@ function Register() {
   const registerMutation = useMutation({
     mutationFn: (user : User) => createUser(user),
     onSuccess: () => {
+      Toast.success('User created successfully')
       navigate({to: "/login"})
+    },
+    onError: (error) => {
+      if (error.response) {
+        Toast.error(error.response?.data.message)
+      }
+      else {
+        Toast.error(error.message)
+      }
     }
   })
 

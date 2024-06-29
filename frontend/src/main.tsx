@@ -7,8 +7,8 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-
 import { routeTree } from './routeTree.gen';
+import Toast from "./components/Toast.tsx";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -30,6 +30,7 @@ if (!rootElement.innerHTML) {
       <StrictMode>
         <MantineProvider defaultColorScheme={"dark"}>
           <QueryClientProvider client={queryClient}>
+            <Toast />
             <RouterProvider router={router} />
           </QueryClientProvider>
         </MantineProvider>

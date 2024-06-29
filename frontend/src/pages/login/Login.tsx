@@ -6,13 +6,23 @@ import {Link, useNavigate} from "@tanstack/react-router";
 import {useForm, SubmitHandler} from "react-hook-form";
 import {login} from '../../misc/api.ts'
 import {User} from '../../misc/Types.ts'
+import Toast from 'react-hot-toast';
 
 function Login() {
   const navigate = useNavigate()
   const loginMutation = useMutation({
     mutationFn: (user : User) => login(user),
     onSuccess: () => {
+      Toast.success('Login successful')
       navigate({to: "/dashboard"})
+    },
+    onError: (error) => {
+      if (error.response) {
+        Toast.error(error.response?.data.message)
+      }
+      else {
+        Toast.error(error.message)
+      }
     }
   })
 

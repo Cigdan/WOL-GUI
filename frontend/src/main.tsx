@@ -28,7 +28,7 @@ if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
       <StrictMode>
-        <MantineProvider defaultColorScheme={"dark"}>
+        <MantineProvider defaultColorScheme={localStorage.getItem("theme") || "auto"}>
           <QueryClientProvider client={queryClient}>
             <Toast />
             <RouterProvider router={router} />

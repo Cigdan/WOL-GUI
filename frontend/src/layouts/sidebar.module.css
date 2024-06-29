@@ -4,6 +4,8 @@
     border-left: none;
     border-bottom: none;
     border-top: none;
+    /* position: absolute; */
+    z-index: 100;
 }
 
 .navButton {
@@ -13,4 +15,10 @@
 .navItems {
     padding: 1rem;
     height: 100%;
+}
+
+@media (max-width: 768px) {
+    .navbar {
+
+    }
 }

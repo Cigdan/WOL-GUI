@@ -57,4 +57,9 @@ async function getMyDevices() {
   return response.data
 }
 
-export {login, createUser, logout, getMyDevices, checkAuth}
+async function addDevice(device) {
+  const response = await api.post('/devices', device)
+  return response.data
+}
+
+export {login, createUser, logout, getMyDevices, checkAuth, addDevice}

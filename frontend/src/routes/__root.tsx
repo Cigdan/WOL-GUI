@@ -10,7 +10,7 @@ export const Route = createRootRoute({
           return <Outlet/>
       }
       return (
-          <Group grow>
+          <Group grow align={"start"}>
             <Sidebar/>
             <Outlet/>
           </Group>

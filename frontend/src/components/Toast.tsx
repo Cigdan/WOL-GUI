@@ -1,5 +1,5 @@
 import { Toaster, ToastBar } from 'react-hot-toast';
-import { Notification } from '@mantine/core';
+import { Notification  } from '@mantine/core';
 
 const Toast = () => (
     <Toaster

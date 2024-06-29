@@ -18,7 +18,7 @@ func InitDB() (db *sql.DB, err error) {
 	if err != nil {
 		return nil, err
 	}
-	err = ExecStatement(driver, "CREATE TABLE IF NOT EXISTS device (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, mac_address TEXT NOT NULL UNIQUE, last_online DATETIME, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES user(id))")
+	err = ExecStatement(driver, "CREATE TABLE IF NOT EXISTS device (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, mac_address TEXT NOT NULL UNIQUE, ip_address TEXT UNIQUE, last_online DATETIME, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES user(id))")
 	if err != nil {
 		return nil, err
 	}

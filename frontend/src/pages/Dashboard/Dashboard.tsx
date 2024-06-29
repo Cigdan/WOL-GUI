@@ -1,15 +1,17 @@
-import {Button} from "@mantine/core";
-import {useMutation} from "@tanstack/react-query";
-import {getMyDevices} from "../../misc/api.ts";
+import {Container, Title, Stack} from "@mantine/core";
+import MyDevices from "./components/MyDevices.tsx";
+import AddDevice from "./components/AddDevice.tsx";
 
 function Dashboard() {
-  const mutation = useMutation({
-    mutationFn: () => getMyDevices(),
-  })
   return (
-      <div>
-        <Button onClick={() => mutation.mutate()}>TEst</Button>
-      </div>
+      <Container p={"md"} fluid>
+        <Title my={"md"} order={1}>Dashboard</Title>
+        <Stack>
+          <MyDevices/>
+          <AddDevice />
+        </Stack>
+      </Container>
+
   );
 }
 

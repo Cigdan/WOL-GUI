@@ -3,4 +3,12 @@ type User = {
   password: string;
 }
 
-export type { User };
+type Device = {
+  id: string;
+  name: string;
+  mac_address: string;
+  ip_address: string;
+  last_online: string;
+}
+
+export type { User, Device };

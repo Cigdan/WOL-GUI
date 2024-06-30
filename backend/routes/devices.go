@@ -73,7 +73,9 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 			return
 		}
 
-		err := db.ExecStatement(driver, "INSERT INTO device (name, mac_address, ip_address, user_id) VALUES (?, ?, ?, ?)", device.Name, device.MacAddress, device.IpAddress, user.ID)
+		err := db.ExecStatement(driver,
+			"INSERT INTO device (name, mac_address, ip_address, user_id) VALUES (?, ?, ?, ?)",
+			device.Name, device.MacAddress, device.IpAddress, user.ID)
 		if err != nil {
 			fmt.Println()
 			fmt.Println(err)

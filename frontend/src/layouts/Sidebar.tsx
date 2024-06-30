@@ -1,10 +1,10 @@
-import {Button, Group, Paper, Stack, Text, useMantineColorScheme} from '@mantine/core';
+import {Button, Group, Paper, Stack, Text, Title, useMantineColorScheme} from '@mantine/core';
 import {
   useMutation,
 } from '@tanstack/react-query'
 import classes from './sidebar.module.css';
 import {Link, useNavigate, useRouterState} from "@tanstack/react-router";
-import { House, Settings,LogOut, Sun, Moon   } from 'lucide-react';
+import { House, Settings,LogOut, Sun, Moon, Power   } from 'lucide-react';
 import {logout} from '../misc/api.ts'
 import Toast from 'react-hot-toast';
 
@@ -57,6 +57,10 @@ function Sidebar() {
         <Paper className={classes.navbar} withBorder radius={0}>
           <Stack className={classes.navItems} justify={"space-between"} >
           <Stack gap="sm">
+            <Group justify={"center"} my={"sm"}>
+              <Power size={24}/>
+              <Title order={2}>Wake on Lan</Title>
+            </Group>
           {links.map((link) => {
             return (
                 <Link to={link.href}>

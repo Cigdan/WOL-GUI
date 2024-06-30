@@ -53,7 +53,6 @@ async function checkAuth() {
 
 async function getMyDevices() {
   const response = await api.get('/devices')
-  console.log(response)
   return response.data
 }
 

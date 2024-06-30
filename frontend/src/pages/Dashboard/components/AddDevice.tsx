@@ -11,7 +11,13 @@ function AddDevice() {
     handleSubmit,
     reset,
     formState: {errors},
-  } = useForm<Device>();
+  } = useForm<Device>({
+    defaultValues: {
+      name: null,
+      mac_address: null,
+      ip_address: null,
+    }
+  });
   const queryClient = useQueryClient();
   const addDeviceMutation = useMutation({
     mutationFn: (device : Device) => addDevice(device),
@@ -47,7 +53,7 @@ function AddDevice() {
                 required: "Mac Address is required",
                 pattern: {value: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, message: "Invalid Mac Address"},
               })} error={errors.mac_address && errors.mac_address.message} label="Mac Address"/>
-              <TextInput {...register("ip_address", {
+              <TextInput defaultValue={null} {...register("ip_address", {
                 pattern: {
                   value: /^([0-9]{1,3}\.){3}[0-9]{1,3}$/,
                   message: "Invalid IP Address"

@@ -1,6 +1,7 @@
 import {createRootRoute, Outlet} from '@tanstack/react-router'
 import Sidebar from "../layouts/Sidebar.tsx";
-import {Group} from "@mantine/core";
+import {Container, Group} from "@mantine/core";
+import "../index.css"
 
 const nonSidebarRoutes = ["login", "register"]
 
@@ -10,9 +11,12 @@ export const Route = createRootRoute({
           return <Outlet/>
       }
       return (
-          <Group grow align={"start"}>
+          <Group grow align={"start"} className={"container"}>
             <Sidebar/>
-            <Outlet/>
+            <Container className={"content"} pt={"xl"} mt={"lg"} fluid>
+              <Outlet/>
+            </Container>
+
           </Group>
       )
     }

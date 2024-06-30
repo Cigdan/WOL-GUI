@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"backend/db/auth"
+	"backend/utils/auth"
 	"database/sql"
 	"github.com/gin-gonic/gin"
 )

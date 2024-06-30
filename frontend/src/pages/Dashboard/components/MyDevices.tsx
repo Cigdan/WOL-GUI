@@ -1,4 +1,4 @@
-import {ActionIcon, Group, Paper, Stack, Title} from "@mantine/core";
+import {ActionIcon, Group, Paper, Stack, Title, Tooltip} from "@mantine/core";
 import MyDevicesTable from "./MyDevicesTable.tsx";
 import Filter from "./Filter.tsx";
 import { RefreshCcw } from 'lucide-react';
@@ -12,9 +12,11 @@ function MyDevices() {
           <Group w={"100%"} justify={"space-between"}>
             <Group gap={"sm"}>
               <Title order={2}>My Devices</Title>
-              <ActionIcon onClick={() => queryClient.invalidateQueries('devices')} variant="transparent" aria-label="Refresh">
-                <RefreshCcw size={24} />
-              </ActionIcon>
+              <Tooltip label={"Refresh Devices"}>
+                <ActionIcon onClick={() => queryClient.invalidateQueries('devices')} variant="transparent" aria-label="Refresh">
+                  <RefreshCcw size={24} />
+                </ActionIcon>
+              </Tooltip>
             </Group>
             <Filter />
           </Group>

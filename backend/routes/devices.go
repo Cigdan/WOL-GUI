@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"backend/db"
 	"backend/middleware"
+	"backend/utils"
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	probing "github.com/prometheus-community/pro-bing"
+	"github.com/prometheus-community/pro-bing"
 	"strings"
 	"time"
 )
@@ -35,7 +35,7 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 			return
 		}
 
-		deviceRows, err := db.Query(driver, "SELECT * FROM device WHERE user_id = ?", user.ID)
+		deviceRows, err := utils.Query(driver, "SELECT * FROM device WHERE user_id = ?", user.ID)
 		if err != nil {
 			c.JSON(500, gin.H{"message": "Couldn't get devices", "data": nil})
 			return
@@ -80,7 +80,7 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 		}
 
 		var replacer = strings.NewReplacer("-", ":")
-		_, err := db.ExecStatement(driver,
+		_, err := utils.ExecStatement(driver,
 			"INSERT INTO device (name, mac_address, ip_address, user_id) VALUES (?, ?, ?, ?)",
 			device.Name, replacer.Replace(device.MacAddress), device.IpAddress, user.ID)
 		if err != nil {
@@ -111,7 +111,7 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 		}
 
 		var replacer = strings.NewReplacer("-", ":")
-		_, err := db.ExecStatement(driver, "UPDATE device SET name = ?, mac_address = ?, ip_address = ? "+
+		_, err := utils.ExecStatement(driver, "UPDATE device SET name = ?, mac_address = ?, ip_address = ? "+
 			"WHERE id = ? AND user_id = ?",
 			device.Name, replacer.Replace(device.MacAddress), device.IpAddress, c.Param("id"), user.ID)
 		if err != nil {
@@ -135,7 +135,7 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 			return
 		}
 
-		_, err := db.ExecStatement(driver, "DELETE FROM device WHERE id = ? AND user_id = ?", c.Param("id"), user.ID)
+		_, err := utils.ExecStatement(driver, "DELETE FROM device WHERE id = ? AND user_id = ?", c.Param("id"), user.ID)
 		if err != nil {
 			c.JSON(500, gin.H{"message": "Couldn't delete device"})
 			return
@@ -158,7 +158,7 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 		}
 
 		var ipAddress *string
-		deviceRow, err := db.QueryOne(driver, "SELECT ip_address FROM device WHERE id = ? AND user_id = ?", c.Param("id"), user.ID)
+		deviceRow, err := utils.QueryOne(driver, "SELECT ip_address FROM device WHERE id = ? AND user_id = ?", c.Param("id"), user.ID)
 		if err != nil {
 			fmt.Println(err)
 			c.JSON(500, gin.H{"message": "Couldn't get device status", "status": -1})
@@ -190,5 +190,48 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 			return
 		}
 		c.JSON(200, gin.H{"message": "Device is online", "status": 1})
+	})
+
+	// Wake Device Route
+	deviceRoutes.POST("/wake/:id", func(c *gin.Context) {
+		driver, ok := c.MustGet("driver").(*sql.DB)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid database driver"})
+			return
+		}
+
+		user, ok := c.MustGet("userdata").(middleware.UserData)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid userdata"})
+			return
+		}
+
+		var macAddress string
+		deviceRow, err := utils.QueryOne(driver, "SELECT mac_address FROM device WHERE id = ? AND user_id = ?", c.Param("id"), user.ID)
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(500, gin.H{"message": "Couldn't wake device"})
+			return
+		}
+		err = deviceRow.Scan(&macAddress)
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(500, gin.H{"message": "Couldn't wake device"})
+			return
+		}
+
+		packet, err, status := utils.GeneratePacket(macAddress)
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(status, gin.H{"message": err.Error()})
+			return
+		}
+		err = utils.SendPacket(packet)
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(500, gin.H{"message": "Couldn't sent packet"})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Packet has been sent"})
 	})
 }

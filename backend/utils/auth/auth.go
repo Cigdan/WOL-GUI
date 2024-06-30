@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"backend/db"
+	"backend/utils"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
@@ -28,7 +28,7 @@ func hashPassword(password string) (string, error) {
 
 func CreateUser(driver *sql.DB, username string, password string) (error, int) {
 	// Check if username already exists
-	row, err := db.QueryOne(driver, "SELECT COUNT(username) as users FROM user WHERE username = ?", username)
+	row, err := utils.QueryOne(driver, "SELECT COUNT(username) as users FROM user WHERE username = ?", username)
 	if err != nil {
 		return err, 500
 	}
@@ -47,7 +47,7 @@ func CreateUser(driver *sql.DB, username string, password string) (error, int) {
 		return err, 500
 	}
 
-	_, err = db.ExecStatement(driver, "INSERT INTO user (username, password) VALUES (?, ?)", username, hashedPassword)
+	_, err = utils.ExecStatement(driver, "INSERT INTO user (username, password) VALUES (?, ?)", username, hashedPassword)
 	if err != nil {
 		return err, 500
 	}
@@ -103,7 +103,7 @@ func Login(driver *sql.DB, username string, password string) (string, error, int
 	var dbUsername string
 	var dbPassword string
 
-	row, err := db.QueryOne(driver, "SELECT id, username, password FROM user WHERE username = ?", username)
+	row, err := utils.QueryOne(driver, "SELECT id, username, password FROM user WHERE username = ?", username)
 	if err != nil {
 		return "", err, 400
 	}

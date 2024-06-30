@@ -76,4 +76,20 @@ async function checkDeviceStatus(id) {
   return response.data
 }
 
-export {login, createUser, logout, getMyDevices, checkAuth, addDevice, editDevice, deleteDevice, checkDeviceStatus}
+async function wakeDevice(id) {
+  const response = await api.post(`/devices/wake/${id}`)
+  return response.data
+}
+
+export {
+  login,
+  createUser,
+  logout,
+  getMyDevices,
+  checkAuth,
+  addDevice,
+  editDevice,
+  deleteDevice,
+  checkDeviceStatus,
+  wakeDevice
+}

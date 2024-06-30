@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"backend/db/auth"
+	"backend/utils/auth"
 	"github.com/gin-gonic/gin"
 )
 

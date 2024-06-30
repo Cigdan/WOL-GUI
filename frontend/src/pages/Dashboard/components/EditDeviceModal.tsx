@@ -60,6 +60,7 @@ function EditDeviceModal(props: EditDeviceModalProps) {
       id: device.id,
       name: device.name,
       mac_address: device.mac_address,
+      subnet_mask: device.subnet_mask,
       ip_address: device.ip_address,
     }
   });
@@ -80,13 +81,14 @@ function EditDeviceModal(props: EditDeviceModalProps) {
         <form onSubmit={handleSubmit(onSubmit)}>
           <Stack gap={"md"}>
             <Stack>
-              <TextInput {...register("name", {
+              <TextInput withAsterisk {...register("name", {
                 required: "Name is required",
               })} error={errors.name && errors.name.message} label="Device Name"/>
-              <TextInput {...register("mac_address", {
-                required: "Mac Address is required",
-                pattern: {value: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, message: "Invalid Mac Address"},
-              })} error={errors.mac_address && errors.mac_address.message} label="Mac Address"/>
+                <TextInput withAsterisk {...register("mac_address", {
+                  required: "Mac Address is required",
+                  pattern: {value: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, message: "Invalid Mac Address"},
+                })} error={errors.mac_address && errors.mac_address.message} label="Mac Address"/>
+
               <TextInput defaultValue={null} {...register("ip_address", {
                 pattern: {
                   value: /^([0-9]{1,3}\.){3}[0-9]{1,3}$/,

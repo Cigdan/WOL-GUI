@@ -26,16 +26,16 @@
     display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 850px) {
     .navbar {
         position: fixed;
-        left: -100%;
-        transition: transform 0.3s ease;
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
     }
 
     .open
     {
-        left: 0;
+        transform: translateX(100%);
     }
 
     .toggleButton {

@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	probing "github.com/prometheus-community/pro-bing"
 	"strings"
 	"time"
 )
@@ -45,7 +46,6 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 			var device Device
 			err = deviceRows.Scan(&device.ID, &device.Name, &device.MacAddress, &device.IpAddress, &device.LastOnline, &device.UserID)
 			if err != nil {
-				fmt.Println(err)
 				c.JSON(500, gin.H{"message": "Couldn't get devices", "data": nil})
 				return
 			}
@@ -80,16 +80,115 @@ func DeviceRoutes(deviceRoutes *gin.RouterGroup) {
 		}
 
 		var replacer = strings.NewReplacer("-", ":")
-		err := db.ExecStatement(driver,
+		_, err := db.ExecStatement(driver,
 			"INSERT INTO device (name, mac_address, ip_address, user_id) VALUES (?, ?, ?, ?)",
 			device.Name, replacer.Replace(device.MacAddress), device.IpAddress, user.ID)
 		if err != nil {
-			fmt.Println()
-			fmt.Println(err)
 			c.JSON(500, gin.H{"message": "Couldn't add device"})
 			return
 		}
 
 		c.JSON(201, gin.H{"message": "Device added successfully"})
+	})
+
+	// Update Device Route
+	deviceRoutes.PUT("/edit/:id", func(c *gin.Context) {
+		var device Device
+		if err := c.BindJSON(&device); err != nil {
+			c.JSON(400, gin.H{"message": "Invalid JSON format"})
+			return
+		}
+		driver, ok := c.MustGet("driver").(*sql.DB)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid database driver"})
+			return
+		}
+
+		user, ok := c.MustGet("userdata").(middleware.UserData)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid userdata"})
+			return
+		}
+
+		var replacer = strings.NewReplacer("-", ":")
+		_, err := db.ExecStatement(driver, "UPDATE device SET name = ?, mac_address = ?, ip_address = ? "+
+			"WHERE id = ? AND user_id = ?",
+			device.Name, replacer.Replace(device.MacAddress), device.IpAddress, c.Param("id"), user.ID)
+		if err != nil {
+			c.JSON(500, gin.H{"message": "Couldn't update device"})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Device updated successfully"})
+	})
+
+	// Delete Device Route
+	deviceRoutes.DELETE("/delete/:id", func(c *gin.Context) {
+		driver, ok := c.MustGet("driver").(*sql.DB)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid database driver"})
+			return
+		}
+
+		user, ok := c.MustGet("userdata").(middleware.UserData)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid userdata"})
+			return
+		}
+
+		_, err := db.ExecStatement(driver, "DELETE FROM device WHERE id = ? AND user_id = ?", c.Param("id"), user.ID)
+		if err != nil {
+			c.JSON(500, gin.H{"message": "Couldn't delete device"})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Device deleted successfully"})
+	})
+
+	// Check Device Status
+	deviceRoutes.GET("/status/:id", func(c *gin.Context) {
+		driver, ok := c.MustGet("driver").(*sql.DB)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid database driver", "status": -1})
+			return
+		}
+
+		user, ok := c.MustGet("userdata").(middleware.UserData)
+		if !ok {
+			c.JSON(500, gin.H{"message": "Invalid userdata", "status": -1})
+			return
+		}
+
+		var ipAddress *string
+		deviceRow, err := db.QueryOne(driver, "SELECT ip_address FROM device WHERE id = ? AND user_id = ?", c.Param("id"), user.ID)
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(500, gin.H{"message": "Couldn't get device status", "status": -1})
+			return
+		}
+		err = deviceRow.Scan(&ipAddress)
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(500, gin.H{"message": "Couldn't get device status", "status": -1})
+			return
+		}
+		if ipAddress == nil {
+			c.JSON(200, gin.H{"message": "Device is offline", "status": 0})
+			return
+		}
+
+		pinger, err := probing.NewPinger(*ipAddress)
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(500, gin.H{"message": "Couldn't get device status", "status": -1})
+			return
+		}
+		pinger.SetPrivileged(true)
+		pinger.Count = 1
+		err = pinger.Run()
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(500, gin.H{"message": "Couldn't get device status", "status": -1})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Device is online", "status": 1})
 	})
 }

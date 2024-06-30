@@ -61,4 +61,19 @@ async function addDevice(device) {
   return response.data
 }
 
-export {login, createUser, logout, getMyDevices, checkAuth, addDevice}
+async function editDevice(device) {
+  const response = await api.put(`/devices/edit/${device.id}`, device)
+  return response.data
+}
+
+async function deleteDevice(device) {
+  const response = await api.delete(`/devices/delete/${device.id}`)
+  return response.data
+}
+
+async function checkDeviceStatus(id) {
+  const response = await api.get(`/devices/status/${id}`)
+  return response.data
+}
+
+export {login, createUser, logout, getMyDevices, checkAuth, addDevice, editDevice, deleteDevice, checkDeviceStatus}

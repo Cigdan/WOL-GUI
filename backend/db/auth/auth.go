@@ -47,7 +47,7 @@ func CreateUser(driver *sql.DB, username string, password string) (error, int) {
 		return err, 500
 	}
 
-	err = db.ExecStatement(driver, "INSERT INTO user (username, password) VALUES (?, ?)", username, hashedPassword)
+	_, err = db.ExecStatement(driver, "INSERT INTO user (username, password) VALUES (?, ?)", username, hashedPassword)
 	if err != nil {
 		return err, 500
 	}

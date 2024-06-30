@@ -14,11 +14,11 @@ func InitDB() (db *sql.DB, err error) {
 	if err != nil {
 		return nil, err
 	}
-	err = ExecStatement(driver, "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)")
+	_, err = ExecStatement(driver, "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)")
 	if err != nil {
 		return nil, err
 	}
-	err = ExecStatement(driver, "CREATE TABLE IF NOT EXISTS device (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, mac_address TEXT NOT NULL UNIQUE, ip_address TEXT UNIQUE, last_online DATETIME, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES user(id))")
+	_, err = ExecStatement(driver, "CREATE TABLE IF NOT EXISTS device (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, mac_address TEXT NOT NULL UNIQUE, ip_address TEXT UNIQUE, last_online DATETIME, user_id INTEGER, FOREIGN KEY (user_id) REFERENCES user(id))")
 	if err != nil {
 		return nil, err
 	}
@@ -26,16 +26,16 @@ func InitDB() (db *sql.DB, err error) {
 
 }
 
-func ExecStatement(driver *sql.DB, query string, args ...interface{}) error {
+func ExecStatement(driver *sql.DB, query string, args ...interface{}) (sql.Result, error) {
 	statement, err := driver.Prepare(query)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	_, err = statement.Exec(args...)
+	result, err := statement.Exec(args...)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return result, nil
 }
 
 func Query(driver *sql.DB, query string, args ...interface{}) (*sql.Rows, error) {

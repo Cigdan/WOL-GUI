@@ -29,7 +29,7 @@ function DeviceRow(props : DeviceRowProps) {
     onSuccess: () => {
       Toast.success("Successfully sent packet to device");
     },
-    onError: (error) => {
+    onError: (error : Error) => {
       if (error.response) {
         Toast.error(error.response?.data.message);
       } else {
@@ -50,8 +50,8 @@ function DeviceRow(props : DeviceRowProps) {
         </Table.Td>
         <Table.Td>
           <Group gap={0}>
-            <Tooltip label={data.status === 1 ? "Device is already on" : "Turn on device"}>
-            <Button disabled={data.status === 1} onClick={packetMutation.mutate} variant={"subtle"}>
+            <Tooltip label={data && data.status === 1 ? "Device is already on" : "Turn on device"}>
+            <Button disabled={data && data.status === 1} onClick={() => packetMutation.mutate()} variant={"subtle"}>
               <Power size={20}/>
             </Button>
             </Tooltip>

@@ -1,4 +1,4 @@
-import {Button, Group, Modal, Stack, TextInput, Popover, Text} from "@mantine/core";
+import {Button, Group, Modal, Stack, TextInput, Popover, Text, Loader} from "@mantine/core";
 import {Device} from "../../../misc/Types.ts";
 import {useForm} from "react-hook-form";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import Toast from "react-hot-toast";
 type EditDeviceModalProps = {
   opened: boolean;
   close: () => void;
-  setDeviceToEdit: (device: Device) => void;
+  setDeviceToEdit: (device: Device | null) => void;
   device: Device;
 }
 
@@ -36,10 +36,10 @@ function EditDeviceModal(props: EditDeviceModalProps) {
   const deleteDeviceMutation = useMutation({
     mutationFn: (device: Device) => deleteDevice(device),
     onSuccess: async () => {
-      await queryClient.invalidateQueries('devices')
       reset()
       closeModal()
       Toast.success('Successfully deleted Device')
+      await queryClient.invalidateQueries('devices')
     },
     onError: (error) => {
       if (error.response) {
@@ -60,7 +60,6 @@ function EditDeviceModal(props: EditDeviceModalProps) {
       id: device.id,
       name: device.name,
       mac_address: device.mac_address,
-      subnet_mask: device.subnet_mask,
       ip_address: device.ip_address,
     }
   });
@@ -89,7 +88,7 @@ function EditDeviceModal(props: EditDeviceModalProps) {
                   pattern: {value: /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, message: "Invalid Mac Address"},
                 })} error={errors.mac_address && errors.mac_address.message} label="Mac Address"/>
 
-              <TextInput defaultValue={null} {...register("ip_address", {
+              <TextInput {...register("ip_address", {
                 pattern: {
                   value: /^([0-9]{1,3}\.){3}[0-9]{1,3}$/,
                   message: "Invalid IP Address"
@@ -106,7 +105,9 @@ function EditDeviceModal(props: EditDeviceModalProps) {
                   <Popover.Dropdown>
                     <Stack>
                       <Text>Do you want to delete this device?</Text>
-                      <Button onClick={() => deleteDeviceMutation.mutate(device)} color={"red"}>Confirm</Button>
+                      <Button disabled={deleteDeviceMutation.isPending} onClick={() => deleteDeviceMutation.mutate(device)} color={"red"}>
+                        {deleteDeviceMutation.isPending ? <Loader  type="dots" /> : "Delete"}
+                      </Button>
                     </Stack>
                   </Popover.Dropdown>
                 </Popover>

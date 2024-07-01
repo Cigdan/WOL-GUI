@@ -9,7 +9,7 @@ import Toast from "react-hot-toast";
 
 type DeviceRowProps = {
   device: Device;
-  setDeviceToEdit: (device: Device) => void;
+  setDeviceToEdit: (device: Device | null) => void;
 }
 
 function DeviceRow(props : DeviceRowProps) {

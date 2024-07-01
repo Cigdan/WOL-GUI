@@ -2,6 +2,7 @@ package auth
 
 import (
 	"backend/utils"
+	"backend/utils/logger"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
@@ -30,25 +31,30 @@ func CreateUser(driver *sql.DB, username string, password string) (error, int) {
 	// Check if username already exists
 	row, err := utils.QueryOne(driver, "SELECT COUNT(username) as users FROM user WHERE username = ?", username)
 	if err != nil {
+		logger.Error("Error querying database: " + err.Error())
 		return err, 500
 	}
 	var count int
 	err = row.Scan(&count)
 	if err != nil {
+		logger.Error("Error scanning row: " + err.Error())
 		return err, 0
 	}
 
 	if count > 0 {
+		logger.Warning("Username: " + username + " already exists")
 		return errors.New("username already exists"), 409
 	}
 
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
+		logger.Error("Error hashing password: " + err.Error())
 		return err, 500
 	}
 
 	_, err = utils.ExecStatement(driver, "INSERT INTO user (username, password) VALUES (?, ?)", username, hashedPassword)
 	if err != nil {
+		logger.Error("Error inserting user: " + err.Error())
 		return err, 500
 	}
 	return nil, 200
@@ -110,18 +116,22 @@ func Login(driver *sql.DB, username string, password string) (string, error, int
 	err = row.Scan(&dbId, &dbUsername, &dbPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", errors.New("user not found"), 401
+			logger.Warning("User " + username + " not found")
+			return "", errors.New("invalid Credentials"), 401
 		}
+		logger.Error("Error scanning row: " + err.Error())
 		return "", err, 500
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(dbPassword), []byte(password))
 	if err != nil {
-		return "", errors.New("wrong password"), 401
+		logger.Warning("Invalid password for user " + username)
+		return "", errors.New("invalid Credentials"), 401
 	}
 
 	token, err := GenerateToken(dbId, username)
 	if err != nil {
+		logger.Error("Error generating token: " + err.Error())
 		return "", err, 500
 	}
 	return token, nil, 200
@@ -139,6 +149,7 @@ func ValidateToken(reqToken string) (*Claims, error, int) {
 
 	decodedKey, err := base64.URLEncoding.DecodeString(key)
 	if err != nil {
+		logger.Error("Error decoding key: " + err.Error())
 		return nil, err, 500
 	}
 
@@ -152,18 +163,22 @@ func ValidateToken(reqToken string) (*Claims, error, int) {
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrSignatureInvalid) {
+			logger.Warning("Invalid token signature")
 			return nil, errors.New("invalid token signature"), 401
 		}
+		logger.Error("Error parsing token: " + err.Error())
 		return nil, err, 500
 	}
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		// Check if the token is expired
 		if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
+			logger.Warning("Token is expired: " + claims.ExpiresAt.String())
 			return nil, errors.New("token is expired"), 401
 		}
 		return claims, nil, 200
 	}
 
+	logger.Warning("Invalid token supplied: " + reqToken)
 	return nil, errors.New("invalid token supplied"), 401
 }

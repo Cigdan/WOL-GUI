@@ -3,20 +3,35 @@ package main
 import (
 	"backend/middleware"
 	"backend/routes"
+	"backend/utils"
+	"backend/utils/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"log"
+	"os"
 )
 
 func main() {
+
+	if _, err := os.Stat("./data"); os.IsNotExist(err) {
+		err = os.Mkdir("./data", os.ModeDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	logger.InitLogger()
+	_, err := utils.InitDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	r := gin.Default()
 	r.Use(middleware.EnvMiddleware())
-
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:5173"}
 	config.AllowCredentials = true
 	r.Use(cors.New(config))
-
 	r.Static("/assets", "../frontend/dist/assets")
 	r.StaticFile("/vite.svg", "../frontend/dist/vite.svg")
 
@@ -49,7 +64,7 @@ func main() {
 	}
 	// ** Device Routes end **
 
-	err := r.Run()
+	err = r.Run()
 	if err != nil {
 		log.Fatal(err)
 	}

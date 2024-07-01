@@ -7,7 +7,7 @@ import (
 
 var sqlDriver = "sqlite3"
 
-var dbCon = "./wol.db"
+var dbCon = "./data/wol.db"
 
 func InitDB() (db *sql.DB, err error) {
 	driver, err := sql.Open(sqlDriver, dbCon)
@@ -23,7 +23,6 @@ func InitDB() (db *sql.DB, err error) {
 		return nil, err
 	}
 	return driver, nil
-
 }
 
 func ExecStatement(driver *sql.DB, query string, args ...interface{}) (sql.Result, error) {

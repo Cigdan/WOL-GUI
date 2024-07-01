@@ -3,6 +3,7 @@ package middleware
 import (
 	"backend/utils"
 	"backend/utils/auth"
+	"backend/utils/logger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,6 +11,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := c.Cookie("token")
 		if err != nil {
+			logger.Warning("No Token has been provided")
 			c.JSON(401, gin.H{"message": "Unauthorized"})
 			c.Abort()
 			return

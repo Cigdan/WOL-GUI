@@ -1,14 +1,10 @@
 package middleware
 
 import (
+	"backend/utils"
 	"backend/utils/auth"
 	"github.com/gin-gonic/gin"
 )
-
-type UserData struct {
-	Username string `json:"username"`
-	ID       int    `json:"id"`
-}
 
 func AuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -24,7 +20,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		userData := UserData{Username: claims.Username, ID: claims.ID}
+		userData := utils.UserData{Username: claims.Username, ID: claims.ID}
 		c.Set("userdata", userData)
 		c.Next()
 	}

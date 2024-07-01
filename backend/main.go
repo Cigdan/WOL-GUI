@@ -36,7 +36,7 @@ func main() {
 	authRoutes := r.Group("/api/auth")
 	{
 		authRoutes.Use(middleware.DbMiddleWare())
-		routes.RegisterRoutes(authRoutes)
+		routes.AuthRoutes(authRoutes)
 	}
 	// ** Auth Routes end **
 

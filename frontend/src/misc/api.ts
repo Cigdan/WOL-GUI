@@ -51,8 +51,8 @@ async function checkAuth() {
   return response.data
 }
 
-async function getMyDevices() {
-  const response = await api.get('/devices')
+async function getMyDevices({limit, search, offset}) {
+  const response = await api.get('/devices', {params: {limit: limit, search: search, offset: offset}})
   return response.data
 }
 

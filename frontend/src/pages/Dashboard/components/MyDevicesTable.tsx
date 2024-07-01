@@ -1,6 +1,6 @@
 import {useQuery} from "@tanstack/react-query";
 import {getMyDevices} from "../../../misc/api.ts";
-import {Container,Loader, Table, Title} from "@mantine/core";
+import {Container, Loader, ScrollArea, Table, Title} from "@mantine/core";
 import {Device} from "../../../misc/Types.ts";
 import style from "../dashboard.module.css";
 import DeviceRow from "./DeviceRow.tsx";
@@ -8,15 +8,29 @@ import {useDisclosure} from "@mantine/hooks";
 import EditDeviceModal from "./EditDeviceModal.tsx";
 import {useEffect, useState} from "react";
 
-function MyDevicesTable() {
+type MyDevicesTableProps = {
+  limit: number
+  search: string
+  offset: number
+  setDeviceCount: (count: number) => void
+}
+
+function MyDevicesTable(props: MyDevicesTableProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const [deviceToEdit, setDeviceToEdit] = useState<Device | null>(null);
+  const { limit, search, offset, setDeviceCount } = props;
   const { data, isLoading, isError } = useQuery({
     queryKey: ["devices"],
-    queryFn: getMyDevices,
+    queryFn: () => getMyDevices({limit: limit, search: search, offset: offset}),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (data && data.count) {
+      setDeviceCount(data.count);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (deviceToEdit) {
@@ -38,7 +52,7 @@ function MyDevicesTable() {
         </Container>
     )
   }
-  if (!data.data || data.data.length === 0) {
+  if (!data.count || !data.devices || data.count === 0) {
     return (
         <Container fluid>
           <Title order={4}>No devices found</Title>
@@ -69,11 +83,11 @@ function MyDevicesTable() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {data.data.map((device: Device) => {
-              return (
-                  <DeviceRow device={device} setDeviceToEdit={setDeviceToEdit} />
-              )
-            })}
+              {data.devices.map((device: Device) => {
+                return (
+                    <DeviceRow device={device} setDeviceToEdit={setDeviceToEdit} />
+                )
+              })}
           </Table.Tbody>
         </Table>
       </>
